@@ -3,38 +3,45 @@ name: iOS AI App Builder
 on:
   push:
     branches:
-      - build-*
+      - build-*   # Trigger only for AI-generated builds
 
 jobs:
   build:
-    name: Build iOS app from AI-generated code
+    name: Build AI-Generated iOS App
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Detect scheme and project
         id: detect
         run: |
-          scheme=$(xcodebuild -list -json | jq -r '.project.schemes[0]')
-          project=$(ls *.xcodeproj | head -1)
+          scheme=$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)
+          project=$(find . -name "*.xcodeproj" | head -n 1 | xargs basename)
           echo "scheme=$scheme" >> $GITHUB_OUTPUT
           echo "project=$project" >> $GITHUB_OUTPUT
 
+      - name: Debug info
+        run: |
+          echo "Detected scheme: ${{ steps.detect.outputs.scheme }}"
+          echo "Detected project: ${{ steps.detect.outputs.project }}"
+          ls -R
+
       - name: Build app
         run: |
-          xcodebuild -scheme "${{ steps.detect.outputs.scheme }}" \
-                     -project "${{ steps.detect.outputs.project }}" \
-                     -sdk iphonesimulator \
-                     -destination 'platform=iOS Simulator,name=iPhone 15' \
-                     build
+          xcodebuild \
+            -scheme "${{ steps.detect.outputs.scheme }}" \
+            -project "${{ steps.detect.outputs.project }}" \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            build
 
-      - name: Archive build
+      - name: Archive build output
         run: |
           zip -r app.zip ${{ steps.detect.outputs.project }} template
 
-      - name: Upload ZIP artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
