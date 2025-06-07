@@ -18,10 +18,10 @@ jobs:
 
       - name: Build app
         run: |
-          xcodebuild -scheme MyApp -project MyApp.xcodeproj -sdk iphonesimulator build
+          xcodebuild -scheme template -project template.xcodeproj -sdk iphonesimulator build
 
       - name: Archive app
-        run: zip -r app.zip MyApp.xcodeproj MyApp
+        run: zip -r app.zip template.xcodeproj template
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
